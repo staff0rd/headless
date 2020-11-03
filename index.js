@@ -21,7 +21,47 @@ function sleep(ms) {
       Object.defineProperty(navigator, 'plugins', {
         get: () => [{mime: "application/pdf", name: "Chrome PDF Viewer", description: "", filename: "mhjfbmdgcfjbbpaeojofohoefgiehjai"}]
       });
-    })
+
+      if (!window.chrome) { // will be present in non-headless
+        window.chrome = {
+          runtime: {},
+          // etc.
+        };
+      }
+
+      // iframe
+      const appendChild = Element.prototype.appendChild;
+      Element.prototype.appendChild = function() {
+        appendChild.apply(this, arguments);
+        if (arguments[0].nodeName === 'IFRAME') {
+          arguments[0].contentWindow.chrome = {
+            runtime: {},
+            // etc.
+          };
+        }
+      };
+
+      // video
+      // document.createElement("video")
+      // const createElement = document.createElement;
+      // document.createElement = function() {
+      //   createElement.apply(this, arguments);
+      //   console.log('createElement', arguments[0]);
+      //   if (arguments[0].nodeName === 'VIDEO') {
+      //     arguments[0].canPlayType = () => 'probably';
+      //   }
+      // };
+      
+
+      // permissions
+      const originalQuery = window.navigator.permissions.query;
+      return window.navigator.permissions.query = (parameters) => (
+        parameters.name === 'notifications' ?
+          Promise.resolve({ state: Notification.permission }) :
+          originalQuery(parameters)
+      );
+    });
+
     const page = await context.newPage();
     
     page.route('**', route => {
@@ -30,7 +70,7 @@ function sleep(ms) {
     });
 
     await page.goto('file://' + path.resolve('./html', 'test.html'), {
-      waitUntil: 'load'
+      waitUntil: 'load',
     });
     
     const fingerprint = await page.evaluate(async () => {
@@ -49,17 +89,12 @@ function sleep(ms) {
     
     
     //await page.goto('https://intoli.com/blog/making-chrome-headless-undetectable/chrome-headless-test.html');
-    //await page.goto('https://arh.antoinevastel.com/bots/areyouheadless');
+    await page.goto('https://arh.antoinevastel.com/bots/areyouheadless');
     //await page.goto('https://coachaustralia.com/');
     //await page.goto('https://hyatt.com/');
     //await page.goto('https://fingerprintjs.com/demo');
     //await page.goto('https://www.whatismybrowser.com/detect/what-is-my-user-agent');
     //await sleep(5000)
-    
-    console.log('webdriver: ' + await page.evaluate(() => JSON.stringify(navigator.webdriver)));
-    console.log('navigator: ' + await page.evaluate(() => JSON.stringify(window.navigator)));
-    console.log('check: ' + await page.evaluate(() => JSON.stringify(window.check)));
-    console.log('plugins: ' + await page.evaluate(() => JSON.stringify(navigator.plugins)));
     
     await page.screenshot({ path: `example-${browserType}.png` });
     await browser.close();
