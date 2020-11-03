@@ -20,7 +20,7 @@ const args = [
 ];
 
 (async () => {
-  for (const browserType of ['chromium']) {
+  for (const browserType of ['chromium', 'webkit', 'firefox']) {
     for (const {browser, headless} of [{
       browser: await playwright[browserType].launch({
         headless: false,
@@ -125,7 +125,7 @@ const args = [
       //await sleep(5000)
       //console.log(await page.evaluate(() => JSON.stringify(window.createdElements, null, 2)));
     
-      fingerprints[headless] = JSON.parse(await page.evaluate(() => window.xhr.find(p => typeof p === 'string' && p.startsWith('{'))));
+      //fingerprints[headless] = JSON.parse(await page.evaluate(() => window.xhr.find(p => typeof p === 'string' && p.startsWith('{'))));
       await page.screenshot({ path: `example-${browserType}${headless ? '-headless' : ''}.png` });
       await browser.close();
     }
