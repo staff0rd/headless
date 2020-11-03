@@ -1,0 +1,24 @@
+{
+  "name": "headless",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/staff0rd/headless.git"
+  },
+  "author": "Stafford Williams",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/staff0rd/headless/issues"
+  },
+  "homepage": "https://github.com/staff0rd/headless#readme",
+  "devDependencies": {
+    "fpcollect": "^1.0.4",
+    "fpscanner": "^0.1.5",
+    "playwright": "^1.5.2"
+  }
+}
