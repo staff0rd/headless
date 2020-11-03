@@ -9,7 +9,7 @@ function sleep(ms) {
 (async () => {
   for (const browserType of ['chromium']) {
     const browser = await playwright[browserType].launch({
-      headless: true,
+      headless: false,
       args: ['--disable-blink-features=AutomationControlled']
     });
 
@@ -29,27 +29,38 @@ function sleep(ms) {
         };
       }
 
+      const appendChild = Element.prototype.appendChild;
+      Element.prototype.appendChild = function() {
+        appendChild.apply(this, arguments);
+        if (arguments[0].nodeName === 'IFRAME') {
+          arguments[0].contentWindow.chrome = {
+            runtime: {},
+            // etc.
+          };
+        }
+      }
+
       window.createdElements = [];
       const createElement = document.createElement;
       document.createElement = function() {
         const result = createElement.apply(this, arguments);
-        window.createdElements.push(result.nodeName);
+        window.createdElements.push(result);
         switch(result.nodeName) {
-          case 'IFRAME': {
-            result.contentWindow.chrome = {
-              runtime: {},
-              // etc.
-            };
-          }
           case 'VIDEO': {
             result.canPlayType = () => 'probably';
           }
         }
         return result;
-        // if (arguments[0].nodeName === 'VIDEO') {
-        //   arguments[0].canPlayType = () => 'probably';
-        // }
       };
+
+      window.xhr = [];
+
+      const xhrSend = window.XMLHttpRequest.prototype.send;
+      window.XMLHttpRequest.prototype.send = function() {
+        const result = xhrSend.apply(this, arguments);
+        window.xhr.push(arguments);
+        return result;
+      }
       
 
       // permissions
@@ -91,6 +102,7 @@ function sleep(ms) {
     //await page.goto('https://www.whatismybrowser.com/detect/what-is-my-user-agent');
     //await sleep(5000)
     console.log(await page.evaluate(() => JSON.stringify(window.createdElements, null, 2)));
+    console.log(await page.evaluate(() => JSON.parse(window.xhr[0][0])));
     await page.screenshot({ path: `example-${browserType}.png` });
     await browser.close();
   }
