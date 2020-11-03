@@ -29,28 +29,27 @@ function sleep(ms) {
         };
       }
 
-      // iframe
-      const appendChild = Element.prototype.appendChild;
-      Element.prototype.appendChild = function() {
-        appendChild.apply(this, arguments);
-        if (arguments[0].nodeName === 'IFRAME') {
-          arguments[0].contentWindow.chrome = {
-            runtime: {},
-            // etc.
-          };
+      window.createdElements = [];
+      const createElement = document.createElement;
+      document.createElement = function() {
+        const result = createElement.apply(this, arguments);
+        window.createdElements.push(result.nodeName);
+        switch(result.nodeName) {
+          case 'IFRAME': {
+            result.contentWindow.chrome = {
+              runtime: {},
+              // etc.
+            };
+          }
+          case 'VIDEO': {
+            result.canPlayType = () => 'probably';
+          }
         }
+        return result;
+        // if (arguments[0].nodeName === 'VIDEO') {
+        //   arguments[0].canPlayType = () => 'probably';
+        // }
       };
-
-      // video
-      // document.createElement("video")
-      // const createElement = document.createElement;
-      // document.createElement = function() {
-      //   createElement.apply(this, arguments);
-      //   console.log('createElement', arguments[0]);
-      //   if (arguments[0].nodeName === 'VIDEO') {
-      //     arguments[0].canPlayType = () => 'probably';
-      //   }
-      // };
       
 
       // permissions
@@ -83,11 +82,7 @@ function sleep(ms) {
         console.log(JSON.stringify(scannerResult[key], null, 2));
       }
     })
-    
-    //console.log(JSON.stringify(scannerResult));
-
-    
-    
+  
     //await page.goto('https://intoli.com/blog/making-chrome-headless-undetectable/chrome-headless-test.html');
     await page.goto('https://arh.antoinevastel.com/bots/areyouheadless');
     //await page.goto('https://coachaustralia.com/');
@@ -95,7 +90,7 @@ function sleep(ms) {
     //await page.goto('https://fingerprintjs.com/demo');
     //await page.goto('https://www.whatismybrowser.com/detect/what-is-my-user-agent');
     //await sleep(5000)
-    
+    console.log(await page.evaluate(() => JSON.stringify(window.createdElements, null, 2)));
     await page.screenshot({ path: `example-${browserType}.png` });
     await browser.close();
   }
